@@ -8,7 +8,7 @@ enum Config {
     // MARK: - API
     // For development, use your local IP address or ngrok tunnel
     // For production, use your deployed API URL
-    static let apiBaseUrl = "http://192.168.68.127:8000/api/v1"
+    static let apiBaseUrl = "https://wellness-coach-ai.onrender.com/api/v1"
 
     // MARK: - App
     static let appName = "Wellness Coach AI"
