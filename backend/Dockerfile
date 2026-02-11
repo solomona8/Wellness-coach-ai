@@ -29,3 +29,4 @@ EXPOSE 10000
 
 # Run the application using shell form to expand $PORT
 CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}
+
