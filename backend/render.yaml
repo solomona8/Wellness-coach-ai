@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: wellness-coach-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_DEFAULT_VOICE_ID
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
