@@ -73,6 +73,24 @@ struct PodcastContentView: View {
                     .padding(40)
                 }
 
+                // Generate New Podcast Button (always visible)
+                if !isLoading && loadError == nil {
+                    Button {
+                        showingGenerateSheet = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "sparkles")
+                            Text("Generate Today's Podcast")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+                }
+
                 // Today's Podcast Card
                 if let todaysPodcast = podcasts.first {
                     TodayPodcastCardReal(
