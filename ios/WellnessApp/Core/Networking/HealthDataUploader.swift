@@ -107,7 +107,20 @@ class HealthDataUploader: ObservableObject {
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
-        // Fetch recent heart rate
+        // Fetch recent resting heart rate
+        let restingHRResponse = try await supabase
+            .from("health_metrics")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .eq("metric_type", value: "resting_heart_rate")
+            .gte("recorded_at", value: dateFormatter.string(from: weekAgo))
+            .order("recorded_at", ascending: false)
+            .limit(10)
+            .execute()
+
+        let restingHRRecords = try JSONDecoder().decode([HealthMetricResponse].self, from: restingHRResponse.data)
+
+        // Fetch recent heart rate (for record count)
         let hrResponse = try await supabase
             .from("health_metrics")
             .select()
@@ -158,13 +171,13 @@ class HealthDataUploader: ObservableObject {
         let workoutRecords = try JSONDecoder().decode([ExerciseSessionResponse].self, from: workoutResponse.data)
 
         // Calculate averages
-        let avgHR = hrRecords.isEmpty ? nil : hrRecords.map { $0.value }.reduce(0, +) / Double(hrRecords.count)
+        let restingHR = restingHRRecords.isEmpty ? nil : restingHRRecords.first?.value
         let avgHRV = hrvRecords.isEmpty ? nil : hrvRecords.map { $0.value }.reduce(0, +) / Double(hrvRecords.count)
         let lastSleep = sleepRecords.first
         let totalWorkoutMinutes = workoutRecords.reduce(0) { $0 + $1.durationMinutes }
 
         return DashboardSummary(
-            averageHeartRate: avgHR,
+            restingHeartRate: restingHR,
             averageHRV: avgHRV,
             lastSleepDuration: lastSleep?.totalDurationMinutes,
             lastSleepDate: nil, // Simplified - not parsing date string back
@@ -361,7 +374,7 @@ struct ExerciseSessionResponse: Codable {
 // MARK: - Dashboard Summary
 
 struct DashboardSummary {
-    let averageHeartRate: Double?
+    let restingHeartRate: Double?
     let averageHRV: Double?
     let lastSleepDuration: Int?
     let lastSleepDate: Date?

@@ -4,6 +4,7 @@ import Foundation
 
 enum MetricType: String, Codable {
     case heartRate = "heart_rate"
+    case restingHeartRate = "resting_heart_rate"
     case hrv = "hrv"
     case glucose = "glucose"
     case mindfulness = "mindfulness"

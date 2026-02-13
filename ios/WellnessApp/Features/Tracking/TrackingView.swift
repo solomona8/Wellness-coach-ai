@@ -15,6 +15,7 @@ struct TrackingView: View {
 
     // HealthKit data
     @State private var todayHeartRates: [HealthMetric] = []
+    @State private var todayRestingHR: [HealthMetric] = []
     @State private var todayHRV: [HealthMetric] = []
     @State private var todayGlucose: [HealthMetric] = []
     @State private var todayWorkouts: [ExerciseSession] = []
@@ -99,11 +100,11 @@ struct TrackingView: View {
             .padding(.horizontal)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                // Heart Rate
+                // Resting Heart Rate
                 HealthMetricCard(
                     icon: "heart.fill",
-                    title: "Avg Heart Rate",
-                    value: averageHeartRate,
+                    title: "Resting HR",
+                    value: restingHeartRate,
                     unit: "bpm",
                     color: .red
                 )
@@ -249,9 +250,9 @@ struct TrackingView: View {
 
     // MARK: - Computed Properties
 
-    private var averageHeartRate: Double? {
-        guard !todayHeartRates.isEmpty else { return nil }
-        return todayHeartRates.map { $0.value }.reduce(0, +) / Double(todayHeartRates.count)
+    private var restingHeartRate: Double? {
+        guard !todayRestingHR.isEmpty else { return nil }
+        return todayRestingHR.last?.value
     }
 
     private var averageHRV: Double? {
@@ -275,14 +276,16 @@ struct TrackingView: View {
 
         do {
             async let heartRates = healthKitManager.fetchHeartRateData(from: startOfDay, to: endOfDay)
+            async let restingHR = healthKitManager.fetchRestingHeartRate(from: startOfDay, to: endOfDay)
             async let hrv = healthKitManager.fetchHRVData(from: startOfDay, to: endOfDay)
             async let glucose = healthKitManager.fetchGlucoseData(from: startOfDay, to: endOfDay)
             async let workouts = healthKitManager.fetchWorkouts(from: startOfDay, to: endOfDay)
 
-            let (hr, hrvData, glucoseData, workoutData) = try await (heartRates, hrv, glucose, workouts)
+            let (hr, restingHRData, hrvData, glucoseData, workoutData) = try await (heartRates, restingHR, hrv, glucose, workouts)
 
             await MainActor.run {
                 todayHeartRates = hr
+                todayRestingHR = restingHRData
                 todayHRV = hrvData
                 todayGlucose = glucoseData
                 todayWorkouts = workoutData

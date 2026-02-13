@@ -70,13 +70,13 @@ struct HealthSummarySection: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                // Heart Rate
-                if let avgHR = summary.averageHeartRate {
+                // Resting Heart Rate
+                if let restingHR = summary.restingHeartRate {
                     MetricCard(
                         icon: "heart.fill",
                         iconColor: .red,
-                        title: "Avg Heart Rate",
-                        value: "\(Int(avgHR))",
+                        title: "Resting Heart Rate",
+                        value: "\(Int(restingHR))",
                         unit: "BPM"
                     )
                 }

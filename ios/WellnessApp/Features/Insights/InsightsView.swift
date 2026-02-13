@@ -46,7 +46,7 @@ struct InsightsView: View {
                         if !heartRateData.isEmpty {
                             ChartCard(
                                 title: "Heart Rate",
-                                subtitle: "Average: \(Int(heartRateData.map { $0.value }.reduce(0, +) / Double(heartRateData.count))) bpm",
+                                subtitle: "Range: \(Int(heartRateData.map { $0.value }.min() ?? 0))–\(Int(heartRateData.map { $0.value }.max() ?? 0)) BPM",
                                 icon: "heart.fill",
                                 color: .red
                             ) {
@@ -124,22 +124,24 @@ struct InsightsView: View {
 
     private var heartRateChart: some View {
         Chart {
-            ForEach(aggregatedHeartRate, id: \.date) { item in
-                LineMark(
-                    x: .value("Date", item.date),
-                    y: .value("BPM", item.value)
+            ForEach(heartRateDailyRanges, id: \.date) { item in
+                BarMark(
+                    x: .value("Date", item.date, unit: .day),
+                    yStart: .value("Min", item.min),
+                    yEnd: .value("Max", item.max),
+                    width: .ratio(0.4)
                 )
                 .foregroundStyle(.red)
-
-                AreaMark(
-                    x: .value("Date", item.date),
-                    y: .value("BPM", item.value)
-                )
-                .foregroundStyle(.red.opacity(0.1))
+                .clipShape(Capsule())
             }
         }
         .frame(height: 150)
         .chartYScale(domain: heartRateYDomain)
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day)) { value in
+                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+            }
+        }
     }
 
     private var hrvChart: some View {
@@ -275,8 +277,17 @@ struct InsightsView: View {
 
     // MARK: - Computed Properties
 
-    private var aggregatedHeartRate: [(date: Date, value: Double)] {
-        aggregateByDay(heartRateData)
+    private var heartRateDailyRanges: [(date: Date, min: Double, max: Double)] {
+        let calendar = Calendar.current
+        var dailyValues: [Date: [Double]] = [:]
+
+        for metric in heartRateData {
+            let day = calendar.startOfDay(for: metric.recordedAt)
+            dailyValues[day, default: []].append(metric.value)
+        }
+
+        return dailyValues.map { (date: $0.key, min: $0.value.min() ?? 0, max: $0.value.max() ?? 0) }
+            .sorted { $0.date < $1.date }
     }
 
     private var aggregatedHRV: [(date: Date, value: Double)] {

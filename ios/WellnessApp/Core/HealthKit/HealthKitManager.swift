@@ -16,6 +16,7 @@ class HealthKitManager: ObservableObject {
     // HealthKit types we need to read
     private let readTypes: Set<HKObjectType> = [
         HKQuantityType.quantityType(forIdentifier: .heartRate)!,
+        HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!,
         HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
         HKQuantityType.quantityType(forIdentifier: .bloodGlucose)!,
         HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
@@ -59,6 +60,41 @@ class HealthKitManager: ObservableObject {
                 let metrics = (samples as? [HKQuantitySample])?.map { sample in
                     HealthMetric(
                         type: .heartRate,
+                        value: sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())),
+                        unit: "bpm",
+                        recordedAt: sample.startDate,
+                        source: "healthkit"
+                    )
+                } ?? []
+
+                continuation.resume(returning: metrics)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Resting Heart Rate
+
+    func fetchRestingHeartRate(from startDate: Date, to endDate: Date) async throws -> [HealthMetric] {
+        let restingHRType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: restingHRType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                let metrics = (samples as? [HKQuantitySample])?.map { sample in
+                    HealthMetric(
+                        type: .restingHeartRate,
                         value: sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())),
                         unit: "bpm",
                         recordedAt: sample.startDate,
