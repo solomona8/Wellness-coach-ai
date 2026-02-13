@@ -207,20 +207,17 @@ struct PodcastContentView: View {
         } catch let error as APIError {
             await MainActor.run {
                 switch error {
-                case .httpError(let statusCode):
+                case .httpError(let statusCode, _):
                     if statusCode == 404 {
                         // No podcasts yet - show empty state (not an error)
                         podcasts = []
                         isLoading = false
-                    } else if statusCode == 401 {
-                        loadError = "Not authenticated. Please sign out and sign back in."
-                        isLoading = false
                     } else {
-                        loadError = "Server error: \(statusCode)"
+                        loadError = error.localizedDescription
                         isLoading = false
                     }
                 default:
-                    loadError = "Could not load podcasts"
+                    loadError = error.localizedDescription
                     isLoading = false
                 }
             }

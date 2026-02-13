@@ -42,4 +42,5 @@ struct MainTabView: View {
     MainTabView()
         .environmentObject(HealthKitManager.shared)
         .environmentObject(AuthManager.shared)
+        .environmentObject(HealthSyncManager.shared)
 }

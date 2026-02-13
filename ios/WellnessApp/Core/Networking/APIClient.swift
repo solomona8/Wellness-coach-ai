@@ -46,14 +46,30 @@ class APIClient {
             request.httpBody = try JSONEncoder().encode(body)
         }
 
-        let (data, response) = try await session.data(for: request)
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain {
+                throw APIError.connectionFailed
+            }
+            throw error
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
-            throw APIError.httpError(statusCode: httpResponse.statusCode)
+            // Try to extract error detail from server response
+            var detail: String? = nil
+            if let errorBody = try? JSONDecoder().decode(ServerErrorResponse.self, from: data) {
+                detail = errorBody.detail
+            }
+            throw APIError.httpError(statusCode: httpResponse.statusCode, detail: detail)
         }
 
         let decoder = JSONDecoder()
@@ -203,6 +219,10 @@ class APIClient {
 
 struct EmptyResponse: Decodable {}
 
+struct ServerErrorResponse: Decodable {
+    let detail: String?
+}
+
 struct PodcastListResponse: Decodable {
     let podcasts: [Podcast]
     let total: Int
@@ -291,8 +311,38 @@ struct MeditationEntry: Codable {
 
 // MARK: - Errors
 
-enum APIError: Error {
+enum APIError: Error, LocalizedError {
     case invalidResponse
-    case httpError(statusCode: Int)
+    case httpError(statusCode: Int, detail: String?)
     case decodingError
+    case connectionFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidResponse:
+            return "Invalid response from server."
+        case .httpError(let statusCode, let detail):
+            if let detail = detail {
+                return "Server error (\(statusCode)): \(detail)"
+            }
+            switch statusCode {
+            case 401:
+                return "Not authenticated. Please sign out and sign back in."
+            case 403:
+                return "Access denied."
+            case 404:
+                return "Not found."
+            case 500:
+                return "Server error. Please try again later."
+            case 503:
+                return "Server is starting up. Please wait a moment and try again."
+            default:
+                return "Server error (\(statusCode))."
+            }
+        case .decodingError:
+            return "Unexpected response format from server."
+        case .connectionFailed:
+            return "Could not connect to server. Please check your connection and try again."
+        }
+    }
 }
