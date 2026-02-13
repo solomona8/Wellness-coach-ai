@@ -36,7 +36,7 @@ struct ContentView: View {
         .task {
             await authManager.checkSession()
         }
-        .onChange(of: authManager.isAuthenticated) { isAuthenticated in
+        .onChange(of: authManager.isAuthenticated) { _, isAuthenticated in
             if isAuthenticated && !authManager.needsOnboarding {
                 Task {
                     // Auto-sync health data on login

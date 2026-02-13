@@ -71,7 +71,7 @@ struct TrackingView: View {
                     await loadHealthData()
                 }
             }
-            .onChange(of: selectedDate) { _ in
+            .onChange(of: selectedDate) { _, _ in
                 Task {
                     await loadHealthData()
                 }

@@ -112,7 +112,7 @@ struct InsightsView: View {
                     await loadData()
                 }
             }
-            .onChange(of: selectedTimeRange) { _ in
+            .onChange(of: selectedTimeRange) { _, _ in
                 Task {
                     await loadData()
                 }
