@@ -129,7 +129,7 @@ struct InsightsView: View {
                     x: .value("Date", item.date, unit: .day),
                     yStart: .value("Min", item.min),
                     yEnd: .value("Max", item.max),
-                    width: .ratio(0.4)
+                    width: selectedTimeRange == .month ? .ratio(0.6) : .ratio(0.4)
                 )
                 .foregroundStyle(.red)
                 .clipShape(Capsule())
@@ -137,9 +137,24 @@ struct InsightsView: View {
         }
         .frame(height: 150)
         .chartYScale(domain: heartRateYDomain)
+        .chartXScale(domain: chartDateRange.start...chartDateRange.end)
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day)) { value in
-                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+            switch selectedTimeRange {
+            case .week:
+                AxisMarks(values: .stride(by: .day)) { value in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.weekday(.abbreviated))
+                }
+            case .twoWeeks:
+                AxisMarks(values: .stride(by: .day, count: 2)) { value in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                }
+            case .month:
+                AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                }
             }
         }
     }
@@ -297,6 +312,13 @@ struct InsightsView: View {
     private var aggregatedGlucose: [(date: Date, value: Double)] {
         // For glucose, show more granular data
         glucoseData.map { (date: $0.recordedAt, value: $0.value) }
+    }
+
+    private var chartDateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let end = calendar.startOfDay(for: Date())
+        let start = calendar.date(byAdding: .day, value: -(selectedTimeRange.days - 1), to: end)!
+        return (start, end)
     }
 
     private var heartRateYDomain: ClosedRange<Double> {
