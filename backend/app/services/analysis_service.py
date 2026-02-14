@@ -68,35 +68,40 @@ class AnalysisService:
     ) -> dict:
         """Gather all relevant user data for analysis."""
         start_date = analysis_date - timedelta(days=lookback_days)
+        # Use the day AFTER analysis_date as the upper bound so that
+        # lte("timestamp", "2026-02-14") includes all of Feb 13's data
+        # (timestamps are full ISO8601 like "2026-02-13T19:00:00Z" which
+        # is lexicographically > "2026-02-13" but < "2026-02-14").
+        end_date_exclusive = analysis_date + timedelta(days=1)
 
         return {
             "user_profile": await self.supabase.get_user_profile(user_id),
             "health_metrics": await self.supabase.get_health_metrics(
-                user_id, start_date=start_date, end_date=analysis_date, limit=1000
+                user_id, start_date=start_date, end_date=end_date_exclusive, limit=1000
             ),
             "sleep_sessions": await self.supabase.get_sleep_sessions(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "exercise_sessions": await self.supabase.get_exercise_sessions(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "diet_entries": await self.supabase.get_diet_entries(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "substance_entries": await self.supabase.get_substance_entries(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "mood_entries": await self.supabase.get_mood_entries(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "negativity_entries": await self.supabase.get_negativity_entries(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "gratitude_entries": await self.supabase.get_gratitude_entries(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "meditation_sessions": await self.supabase.get_meditation_sessions(
-                user_id, start_date=start_date, end_date=analysis_date
+                user_id, start_date=start_date, end_date=end_date_exclusive
             ),
             "previous_analyses": await self.supabase.get_recent_analyses(user_id, limit=3),
         }
