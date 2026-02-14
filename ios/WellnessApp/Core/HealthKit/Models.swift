@@ -40,7 +40,13 @@ struct SleepSession: Codable, Identifiable {
     let lightSleepMinutes: Int
     let awakeMinutes: Int
 
+    /// Total actual sleep time (deep + REM + light), not time-in-bed
     var totalDurationMinutes: Int {
+        deepSleepMinutes + remSleepMinutes + lightSleepMinutes
+    }
+
+    /// Total time in bed from first sample to last sample
+    var timeInBedMinutes: Int {
         Int(endTime.timeIntervalSince(startTime) / 60)
     }
 

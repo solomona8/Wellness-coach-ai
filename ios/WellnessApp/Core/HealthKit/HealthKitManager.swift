@@ -212,8 +212,12 @@ class HealthKitManager: ObservableObject {
                     remMinutes += minutes
                 case .asleepCore:
                     lightMinutes += minutes
-                case .awake, .inBed:
+                case .awake:
                     awakeMinutes += minutes
+                case .inBed:
+                    // .inBed represents the full time-in-bed period and overlaps
+                    // with actual sleep stages — skip it to avoid inflating awake time
+                    break
                 default:
                     lightMinutes += minutes
                 }
@@ -221,8 +225,11 @@ class HealthKitManager: ObservableObject {
                 switch HKCategoryValueSleepAnalysis(rawValue: sample.value) {
                 case .asleep:
                     lightMinutes += minutes
-                case .awake, .inBed:
+                case .awake:
                     awakeMinutes += minutes
+                case .inBed:
+                    // Skip .inBed — it overlaps with sleep stages
+                    break
                 default:
                     break
                 }

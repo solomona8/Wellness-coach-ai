@@ -55,7 +55,7 @@ class HealthDataUploader: ObservableObject {
             userId: userId.uuidString,
             startTime: session.startTime,
             endTime: session.endTime,
-            totalDurationMinutes: Int(session.endTime.timeIntervalSince(session.startTime) / 60),
+            totalDurationMinutes: session.totalDurationMinutes,  // actual sleep time (deep + REM + light)
             deepSleepMinutes: session.deepSleepMinutes,
             remSleepMinutes: session.remSleepMinutes,
             lightSleepMinutes: session.lightSleepMinutes,

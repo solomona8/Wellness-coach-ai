@@ -103,17 +103,19 @@ class AnalysisService:
 
     def _build_analysis_prompt(self, user_data: dict, analysis_date: date) -> str:
         """Build the analysis prompt for Claude."""
-        yesterday = analysis_date - timedelta(days=1)
+        # analysis_date is already the target day (podcast_date - 1 from podcast_service),
+        # so use it directly — do NOT subtract another day.
+        target_date = analysis_date
 
         # Format data sections
-        sleep_data = self._format_sleep(user_data.get("sleep_sessions", []), yesterday)
-        heart_data = self._format_heart_metrics(user_data.get("health_metrics", []), yesterday)
-        exercise_data = self._format_exercise(user_data.get("exercise_sessions", []), yesterday)
-        diet_data = self._format_diet(user_data.get("diet_entries", []), yesterday)
-        mood_data = self._format_mood(user_data.get("mood_entries", []), yesterday)
-        substance_data = self._format_substances(user_data.get("substance_entries", []), yesterday)
-        negativity_data = self._format_negativity(user_data.get("negativity_entries", []), yesterday)
-        mindfulness_data = self._format_mindfulness(user_data, yesterday)
+        sleep_data = self._format_sleep(user_data.get("sleep_sessions", []), target_date)
+        heart_data = self._format_heart_metrics(user_data.get("health_metrics", []), target_date)
+        exercise_data = self._format_exercise(user_data.get("exercise_sessions", []), target_date)
+        diet_data = self._format_diet(user_data.get("diet_entries", []), target_date)
+        mood_data = self._format_mood(user_data.get("mood_entries", []), target_date)
+        substance_data = self._format_substances(user_data.get("substance_entries", []), target_date)
+        negativity_data = self._format_negativity(user_data.get("negativity_entries", []), target_date)
+        mindfulness_data = self._format_mindfulness(user_data, target_date)
 
         profile = user_data.get("user_profile") or {}
         health_goals = json.dumps(profile.get("health_goals", []))
@@ -125,7 +127,7 @@ Today's date is {analysis_date.isoformat()}. Analyze the following data and prov
 - Health Goals: {health_goals}
 - Timezone: {profile.get("timezone", "UTC")}
 
-## Yesterday's Data ({yesterday.isoformat()})
+## Data for {target_date.isoformat()}
 
 ### Sleep
 {sleep_data}
@@ -216,20 +218,26 @@ Be encouraging but honest. Focus on actionable insights."""
     # Data formatting helpers
     def _format_sleep(self, sessions: list, target_date: date) -> str:
         """Format sleep data for prompt."""
-        yesterday_sessions = [
+        target_sessions = [
             s for s in sessions
             if s.get("start_time", "").startswith(target_date.isoformat())
         ]
 
-        if not yesterday_sessions:
+        if not target_sessions:
             return "No sleep data recorded"
 
-        session = yesterday_sessions[0]
-        return f"""- Total Duration: {session.get('total_duration_minutes', 'N/A')} minutes
-- Deep Sleep: {session.get('deep_sleep_minutes', 'N/A')} minutes
-- REM Sleep: {session.get('rem_sleep_minutes', 'N/A')} minutes
-- Light Sleep: {session.get('light_sleep_minutes', 'N/A')} minutes
-- Awake: {session.get('awake_minutes', 'N/A')} minutes
+        session = target_sessions[0]
+        deep = session.get('deep_sleep_minutes', 0) or 0
+        rem = session.get('rem_sleep_minutes', 0) or 0
+        light = session.get('light_sleep_minutes', 0) or 0
+        awake = session.get('awake_minutes', 0) or 0
+        total_sleep = deep + rem + light
+
+        return f"""- Total Sleep Time: {total_sleep} minutes ({total_sleep / 60:.1f} hours)
+- Deep Sleep: {deep} minutes
+- REM Sleep: {rem} minutes
+- Light Sleep: {light} minutes
+- Awake: {awake} minutes
 - Sleep Score: {session.get('sleep_score', 'N/A')}"""
 
     def _format_heart_metrics(self, metrics: list, target_date: date) -> str:
