@@ -82,10 +82,16 @@ async def generate_podcast(
         )
         return podcast
     except Exception as e:
-        logger.error("Failed to generate podcast", error=str(e))
+        logger.error(
+            "Failed to generate podcast",
+            error=str(e),
+            error_type=type(e).__name__,
+            user_id=user["id"],
+            date=str(target_date),
+        )
         raise HTTPException(
             status_code=500,
-            detail="Failed to generate podcast",
+            detail=f"Failed to generate podcast: {str(e)}",
         )
 
 

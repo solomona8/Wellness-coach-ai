@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
 CREATE TABLE IF NOT EXISTS public.health_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.user_profiles(id) ON DELETE CASCADE,
-    metric_type TEXT NOT NULL CHECK (metric_type IN ('heart_rate', 'hrv', 'glucose', 'mindfulness', 'active_energy', 'exercise_time')),
+    metric_type TEXT NOT NULL CHECK (metric_type IN ('heart_rate', 'resting_heart_rate', 'hrv', 'glucose', 'mindfulness', 'active_energy', 'exercise_time')),
     value NUMERIC NOT NULL,
     unit TEXT NOT NULL,
     metadata JSONB DEFAULT '{}',
@@ -182,6 +182,7 @@ CREATE TABLE IF NOT EXISTS public.daily_podcasts (
     podcast_date DATE NOT NULL,
     title TEXT,
     script TEXT NOT NULL,
+    tldr TEXT,
     audio_url TEXT,
     duration_seconds INTEGER,
     voice_id TEXT,
