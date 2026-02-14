@@ -422,8 +422,12 @@ class SupabaseService:
             return 0
 
     async def insert_podcast(self, data: dict) -> dict:
-        """Insert a podcast."""
-        result = self.client.table("daily_podcasts").insert(data).execute()
+        """Insert or update a podcast (upsert on user_id + podcast_date)."""
+        result = (
+            self.client.table("daily_podcasts")
+            .upsert(data, on_conflict="user_id,podcast_date")
+            .execute()
+        )
         return result.data[0] if result.data else None
 
     async def mark_podcast_listened(self, user_id: str, podcast_id: str) -> bool:

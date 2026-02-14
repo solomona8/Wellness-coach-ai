@@ -94,17 +94,19 @@ class PodcastService:
         user_id: str,
         podcast_date: date,
     ) -> dict:
-        """Get existing analysis or generate new one."""
-        # Look for yesterday's analysis (podcast is about yesterday)
+        """Generate fresh analysis for the podcast.
+
+        Always regenerates to ensure we use the latest health data
+        and analysis logic. The analysis service uses upsert so this
+        safely overwrites any stale analysis for the same date.
+        """
+        # The podcast covers yesterday's data
         analysis_date = podcast_date - timedelta(days=1)
 
-        analysis = await self.supabase.get_daily_analysis(user_id, analysis_date)
-
-        if not analysis:
-            analysis = await self.analysis_service.generate_daily_analysis(
-                user_id=user_id,
-                analysis_date=analysis_date,
-            )
+        analysis = await self.analysis_service.generate_daily_analysis(
+            user_id=user_id,
+            analysis_date=analysis_date,
+        )
 
         return analysis
 
