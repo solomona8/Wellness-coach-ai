@@ -239,12 +239,14 @@ struct PodcastContentView: View {
         selectedPodcast = podcast
 
         guard let audioUrlString = podcast.audioUrl,
+              !audioUrlString.isEmpty,
               let audioUrl = URL(string: audioUrlString) else {
-            // No audio URL - show script instead or error
-            print("No audio URL available for podcast")
+            loadError = "Audio not available. Try regenerating the podcast."
+            print("No audio URL available for podcast: \(podcast.audioUrl ?? "nil")")
             return
         }
 
+        loadError = nil
         audioManager.playAudioFile(url: audioUrl)
 
         // Mark as listened

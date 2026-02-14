@@ -53,16 +53,27 @@ class StorageService:
         data: bytes,
         content_type: str = "audio/mpeg",
     ) -> str:
-        """Upload audio file to storage."""
+        """Upload audio file to storage (upserts if file already exists)."""
         async with httpx.AsyncClient() as client:
+            # Use x-upsert header so re-generating a podcast overwrites
+            # the previous audio file instead of returning 409 Conflict
             response = await client.post(
                 f"{self.base_url}/object/{bucket}/{path}",
                 headers={
                     "Authorization": f"Bearer {self.service_key}",
                     "Content-Type": content_type,
+                    "x-upsert": "true",
                 },
                 content=data,
             )
+            if response.status_code >= 400:
+                logger.error(
+                    "Storage upload failed",
+                    status=response.status_code,
+                    body=response.text,
+                    bucket=bucket,
+                    path=path,
+                )
             response.raise_for_status()
 
         return f"{self.supabase_url}/storage/v1/object/public/{bucket}/{path}"
