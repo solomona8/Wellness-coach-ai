@@ -316,8 +316,10 @@ struct InsightsView: View {
 
     private var chartDateRange: (start: Date, end: Date) {
         let calendar = Calendar.current
-        let end = calendar.startOfDay(for: Date())
-        let start = calendar.date(byAdding: .day, value: -(selectedTimeRange.days - 1), to: end)!
+        let todayStart = calendar.startOfDay(for: Date())
+        let start = calendar.date(byAdding: .day, value: -(selectedTimeRange.days - 1), to: todayStart)!
+        // End at tomorrow's start so today's bar is fully visible on the chart
+        let end = calendar.date(byAdding: .day, value: 1, to: todayStart)!
         return (start, end)
     }
 
@@ -387,8 +389,9 @@ struct InsightsView: View {
             let (hrData, hrvResult, glucoseResult, sleepResult, workoutResult) = try await (hr, hrv, glucose, sleep, workouts)
 
             await MainActor.run {
-                // Sample heart rate data to avoid overwhelming the chart
-                heartRateData = Array(hrData.suffix(500))
+                // Keep all heart rate data — the chart aggregates by day
+                // so only 7/14/30 bars are rendered regardless of sample count
+                heartRateData = hrData
                 hrvData = hrvResult
                 glucoseData = glucoseResult
                 sleepData = sleepResult
